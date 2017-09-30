@@ -47,6 +47,7 @@ const SNS = new AWS.SNS({ apiVersion: '2010-03-31' });
 const request = require('request');
 const Result = require('folktale/result');
 const _ = require('lodash');
+const { getFirstParkourVideo } = require('./youtubesearch');
 
 const PHONE_NUMBER = require('./phoneNumber');
 const WEATHER_KEY = require('./weatherKey');
@@ -93,20 +94,34 @@ const handler = (event, context, callback) => {
     // // result will go to function callback
     // SNS.publish(params, callback);
 
-    getWeather()
-    .then(result =>
+    if(event.clickType === 'SINGLE')
     {
-        const str = getWeatherString(result);
-        SNS.publish({
-            PhoneNumber: PHONE_NUMBER,
-            Message: str
-        }, callback);
-        // callback(undefined, undefined, str);
-    })
-    .catch(error =>
+        getWeather()
+        .then(result =>
+        {
+            const str = getWeatherString(result);
+            SNS.publish({
+                PhoneNumber: PHONE_NUMBER,
+                Message: str
+            }, callback);
+            // callback(undefined, undefined, str);
+        })
+        .catch(callback);
+    }
+    else if(event.clickType === 'DOUBLE')
     {
-        callback(error);
-    });
+        getFirstParkourVideo()
+        .then(videoStr =>
+        {
+            SNS.publish({
+                PhoneNumber: PHONE_NUMBER,
+                Message: videoStr
+            }, callback);
+        })
+        .catch(callback);
+    }
+
+    
 };
 
 module.exports = {
